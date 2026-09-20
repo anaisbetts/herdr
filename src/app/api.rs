@@ -952,6 +952,18 @@ impl App {
                     },
                 }
             }
+            Method::ServerSshAgentRefresh(params) => {
+                return match crate::server::ssh_agent::refresh(std::path::Path::new(
+                    &params.socket_path,
+                )) {
+                    Ok(()) => responses::encode_success(request.id, ResponseResult::Ok {}),
+                    Err(err) => responses::encode_error(
+                        request.id,
+                        "ssh_agent_refresh_failed",
+                        err.to_string(),
+                    ),
+                };
+            }
             Method::NotificationShow(params) => {
                 return self.handle_notification_show(request.id, params);
             }

@@ -233,6 +233,22 @@ fn request_round_trips_for_server_reload_config() {
 }
 
 #[test]
+fn request_round_trips_for_server_ssh_agent_refresh() {
+    let request = Request {
+        id: "req_ssh_agent_refresh".into(),
+        method: Method::ServerSshAgentRefresh(ServerSshAgentRefreshParams {
+            socket_path: "/tmp/ssh-XXXX/agent.123".into(),
+        }),
+    };
+
+    let json = serde_json::to_value(&request).unwrap();
+    assert_eq!(json["method"], "server.ssh_agent_refresh");
+    assert_eq!(json["params"]["socket_path"], "/tmp/ssh-XXXX/agent.123");
+    let restored: Request = serde_json::from_value(json).unwrap();
+    assert_eq!(restored, request);
+}
+
+#[test]
 fn request_round_trips_for_server_reload_agent_manifests() {
     let request = Request {
         id: "req_reload_agent_manifests".into(),

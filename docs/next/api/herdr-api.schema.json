@@ -3959,6 +3959,17 @@
           },
           "type": "object"
         },
+        "ServerSshAgentRefreshParams": {
+          "properties": {
+            "socket_path": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "socket_path"
+          ],
+          "type": "object"
+        },
         "SplitDirection": {
           "enum": [
             "right",
@@ -4835,6 +4846,22 @@
             },
             "params": {
               "$ref": "#/schemas/request/$defs/EmptyParams"
+            }
+          },
+          "required": [
+            "method",
+            "params"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "method": {
+              "const": "server.ssh_agent_refresh",
+              "type": "string"
+            },
+            "params": {
+              "$ref": "#/schemas/request/$defs/ServerSshAgentRefreshParams"
             }
           },
           "required": [

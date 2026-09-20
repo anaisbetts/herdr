@@ -20,6 +20,7 @@ pub(crate) fn run_remote_client_bridge(args: &[String]) -> io::Result<()> {
         }
     };
     ensure_remote_server_running()?;
+    report_forwarded_ssh_agent();
 
     let socket_path = crate::server::socket_paths::client_socket_path();
     let stream = crate::ipc::connect_local_stream(&socket_path).map_err(|err| {
@@ -58,4 +59,28 @@ fn ensure_remote_server_running() -> io::Result<()> {
 
     crate::server::autodetect::spawn_server_daemon()?;
     crate::server::autodetect::wait_for_server_socket(&socket_path, Duration::from_secs(5))
+}
+
+fn report_forwarded_ssh_agent() {
+    let Ok(socket_path) = std::env::var("SSH_AUTH_SOCK") else {
+        return;
+    };
+    if socket_path.is_empty() {
+        return;
+    }
+
+    let client = crate::api::client::ApiClient::for_target(
+        crate::api::client::ConnectionTarget::SocketPath(crate::api::socket_path()),
+    );
+    let request = crate::api::schema::Request {
+        id: "remote-bridge:ssh-agent-refresh".into(),
+        method: crate::api::schema::Method::ServerSshAgentRefresh(
+            crate::api::schema::ServerSshAgentRefreshParams { socket_path },
+        ),
+    };
+    match client.request_value_with_timeout(&request, Duration::from_millis(500)) {
+        Ok(value) if value.get("error").is_none() => {}
+        Ok(value) => tracing::debug!(error = %value["error"], "ssh agent refresh rejected"),
+        Err(err) => tracing::debug!(error = %err, "ssh agent refresh failed"),
+    }
 }

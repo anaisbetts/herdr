@@ -294,8 +294,20 @@ mod remote_bridge_tests;
 mod unix_common;
 #[cfg(unix)]
 pub(crate) use unix_common::{
-    begin_cli_output, end_cli_output, forward_remote_bridge_stdio, RemoteBridgeWake,
+    begin_cli_output, end_cli_output, forward_remote_bridge_stdio, replace_symlink,
+    RemoteBridgeWake,
 };
+
+#[cfg(not(unix))]
+pub(crate) fn replace_symlink(
+    _target: &std::path::Path,
+    _link: &std::path::Path,
+) -> std::io::Result<()> {
+    Err(std::io::Error::new(
+        std::io::ErrorKind::Unsupported,
+        "SSH agent socket refresh is not supported on this platform",
+    ))
+}
 
 mod client_state;
 pub(crate) use client_state::{create_private_state_file, replace_file, sync_parent_directory};

@@ -476,6 +476,17 @@ pub(crate) fn set_default_plugin_pane_pwd(env: &mut Vec<(String, String)>, cwd: 
     }
 }
 
+pub(crate) fn replace_symlink(target: &Path, link: &Path) -> std::io::Result<()> {
+    let tmp = link.with_extension(format!("tmp-{}", std::process::id()));
+    let _ = std::fs::remove_file(&tmp);
+    std::os::unix::fs::symlink(target, &tmp)?;
+    if let Err(err) = std::fs::rename(&tmp, link) {
+        let _ = std::fs::remove_file(&tmp);
+        return Err(err);
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

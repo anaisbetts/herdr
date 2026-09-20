@@ -150,6 +150,9 @@ fn apply_pane_launch_env(cmd: &mut CommandBuilder, launch_env: &PaneLaunchEnv) {
     // OMP sets OMPCODE for shells it spawns. A pane launched from inside OMP
     // must not inherit it or its root agent would look like a nested session.
     cmd.env_remove("OMPCODE");
+    if let Some(path) = crate::server::ssh_agent::pane_socket_path() {
+        cmd.env("SSH_AUTH_SOCK", path);
+    }
     for (key, value) in &launch_env.extra {
         cmd.env(key, value);
     }
@@ -3807,6 +3810,37 @@ mod tests {
         apply_pane_launch_env(&mut cmd, &PaneLaunchEnv::default());
 
         assert!(cmd.get_env("OMPCODE").is_none());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn pane_launch_env_uses_refreshed_ssh_auth_sock() {
+        let _guard = crate::server::ssh_agent::env_lock();
+        let nanos = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let config_home = std::env::temp_dir().join(format!(
+            "herdr-pane-ssh-agent-{}-{nanos}",
+            std::process::id()
+        ));
+        std::env::set_var("XDG_CONFIG_HOME", &config_home);
+        std::env::remove_var(crate::session::SESSION_ENV_VAR);
+        crate::session::clear_explicit_session_for_test();
+
+        let target = config_home.join("forwarded-agent");
+        crate::server::ssh_agent::refresh(&target).unwrap();
+
+        let mut cmd = CommandBuilder::new("shell");
+        apply_pane_launch_env(&mut cmd, &PaneLaunchEnv::default());
+        assert_eq!(
+            cmd.get_env("SSH_AUTH_SOCK")
+                .and_then(std::ffi::OsStr::to_str),
+            crate::session::data_dir().join("ssh-agent.sock").to_str()
+        );
+
+        let _ = std::fs::remove_dir_all(&config_home);
+        std::env::remove_var("XDG_CONFIG_HOME");
     }
 
     #[test]

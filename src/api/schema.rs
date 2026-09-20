@@ -57,6 +57,8 @@ pub enum Method {
     ServerAgentManifests(EmptyParams),
     #[serde(rename = "server.reload_agent_manifests")]
     ServerReloadAgentManifests(EmptyParams),
+    #[serde(rename = "server.ssh_agent_refresh")]
+    ServerSshAgentRefresh(ServerSshAgentRefreshParams),
     #[serde(rename = "notification.show")]
     NotificationShow(NotificationShowParams),
     #[serde(rename = "product_announcement.dismiss")]

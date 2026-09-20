@@ -4,6 +4,11 @@ use serde::{Deserialize, Serialize};
 pub struct PingParams {}
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, schemars::JsonSchema)]
+pub struct ServerSshAgentRefreshParams {
+    pub socket_path: String,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, schemars::JsonSchema)]
 pub struct ServerLiveHandoffParams {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub import_exe: Option<String>,
