@@ -26,3 +26,9 @@ __pycache__/
 
 /.wrangler/
 **/.wrangler/
+
+# in-tree makepkg (BUILDDIR=.makepkg; never ignore /src/)
+/.makepkg/
+/pkg/
+/*.pkg.tar.*
+
